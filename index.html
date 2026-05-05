@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Quản Lý Khoa Học – SAMIS · UEL</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root{
+  --bg:#f6f5f1; --surface:#ffffff; --soft:#fafaf7;
+  --tx:#1c1917; --tx2:#57534e; --tx3:#a8a29e;
+  --bd:rgba(0,0,0,.07); --bd2:rgba(0,0,0,.13);
+  --navy:#1e3a8a; --navy2:#1e40af; --navy-soft:#eff6ff;
+  --teal:#0d9488; --teal-soft:#ccfbf1;
+  --amber:#d97706; --amber-soft:#fef3c7;
+  --red:#dc2626; --red-soft:#fee2e2;
+  --purple:#7c3aed; --purple-soft:#ede9fe;
+  --green:#059669; --green-soft:#d1fae5;
+  --r:12px; --r2:8px;
+  --sh:0 1px 2px rgba(0,0,0,.04), 0 1px 3px rgba(0,0,0,.06);
+  --sh2:0 4px 6px -1px rgba(0,0,0,.06), 0 2px 4px -1px rgba(0,0,0,.04);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,system-ui,sans-serif;background:var(--bg);color:var(--tx);font-size:13px;-webkit-font-smoothing:antialiased}
+
+.hdr{background:linear-gradient(135deg,#1e3a8a 0%,#1e40af 50%,#312e81 100%);padding:14px 24px;color:#fff;position:relative;overflow:hidden}
+.hdr::before{content:'';position:absolute;top:-40%;right:-10%;width:400px;height:400px;background:radial-gradient(circle,rgba(255,255,255,.08) 0%,transparent 70%);pointer-events:none}
+.hdr-top{display:flex;align-items:center;justify-content:space-between;position:relative;z-index:1}
+.brand{display:flex;align-items:center;gap:12px}
+.brand-mark{width:40px;height:40px;background:rgba(255,255,255,.15);border-radius:10px;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.2)}
+.brand-name{font-size:15px;font-weight:600;letter-spacing:.2px;line-height:1.2}
+.brand-sub{font-size:11px;color:rgba(255,255,255,.65);margin-top:1px}
+.hdr-actions{display:flex;align-items:center;gap:8px}
+.yr{font-size:11px;padding:5px 11px;border-radius:20px;border:1px solid rgba(255,255,255,.25);background:transparent;color:rgba(255,255,255,.7);cursor:pointer;transition:all .15s;font-weight:500}
+.yr.on{background:rgba(255,255,255,.18);color:#fff;border-color:rgba(255,255,255,.4)}
+.live-dot{display:inline-block;width:6px;height:6px;background:#10b981;border-radius:50%;margin-right:5px;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+.tabs{background:var(--surface);border-bottom:0.5px solid var(--bd2);padding:0 24px;display:flex;gap:0;overflow-x:auto;position:sticky;top:0;z-index:50;box-shadow:0 1px 0 var(--bd)}
+.tab{display:flex;align-items:center;gap:7px;padding:0 16px;height:46px;font-size:12.5px;font-weight:500;color:var(--tx2);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:color .15s;background:none;border-top:none;border-left:none;border-right:none}
+.tab svg{width:15px;height:15px;flex-shrink:0;opacity:.55}
+.tab.on{color:var(--navy);border-bottom-color:var(--navy)}
+.tab.on svg{opacity:1}
+.tab:not(.on):hover{color:var(--tx)}
+.tab-badge{background:var(--red-soft);color:var(--red);font-size:10px;padding:1px 6px;border-radius:10px;font-weight:600;margin-left:2px}
+
+.panel{display:none;padding:18px 24px 32px}
+.panel.on{display:block;animation:fadeIn .25s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+.hero-stats{background:var(--surface);border-radius:var(--r);padding:18px;margin-bottom:14px;border:0.5px solid var(--bd);box-shadow:var(--sh);position:relative;overflow:hidden}
+.hero-stats::before{content:'';position:absolute;left:0;top:0;width:4px;height:100%;background:linear-gradient(to bottom,var(--navy),var(--teal))}
+.hero-grid{display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr;gap:24px;align-items:center}
+.hero-main{padding-left:8px}
+.hero-label{font-size:11px;color:var(--tx2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;font-weight:600}
+.hero-num{font-size:38px;font-weight:600;line-height:1;color:var(--tx);font-variant-numeric:tabular-nums}
+.hero-meta{font-size:12px;color:var(--tx2);margin-top:8px;display:flex;align-items:center;gap:6px}
+.delta-pill{display:inline-flex;align-items:center;gap:3px;font-size:11px;padding:2px 8px;border-radius:12px;font-weight:600}
+.delta-pill.up{background:var(--green-soft);color:var(--green)}
+.delta-pill.dn{background:var(--red-soft);color:var(--red)}
+.hero-mini{border-left:1px solid var(--bd);padding-left:24px}
+.mini-label{font-size:10px;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:6px}
+.mini-num{font-size:22px;font-weight:600;color:var(--tx);line-height:1;font-variant-numeric:tabular-nums}
+.mini-bar{height:4px;background:var(--bg);border-radius:2px;margin-top:8px;overflow:hidden;position:relative}
+.mini-bar-fill{height:100%;border-radius:2px;transition:width .8s cubic-bezier(.4,0,.2,1)}
+.mini-foot{font-size:10px;color:var(--tx2);margin-top:5px}
+
+.nhom-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+.nhom-card{background:var(--surface);border-radius:var(--r);padding:16px;border:0.5px solid var(--bd);box-shadow:var(--sh);position:relative;overflow:hidden;cursor:pointer;transition:all .2s}
+.nhom-card:hover{box-shadow:var(--sh2);transform:translateY(-2px)}
+.nhom-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.nhom-card.dhqg::before{background:linear-gradient(90deg,#7c3aed,#a78bfa)}
+.nhom-card.bo::before{background:linear-gradient(90deg,#1e40af,#3b82f6)}
+.nhom-card.cs::before{background:linear-gradient(90deg,#0d9488,#14b8a6)}
+.nhom-card.ht::before{background:linear-gradient(90deg,#d97706,#f59e0b)}
+.nhom-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.nhom-icon{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center}
+.nhom-card.dhqg .nhom-icon{background:var(--purple-soft);color:var(--purple)}
+.nhom-card.bo .nhom-icon{background:var(--navy-soft);color:var(--navy)}
+.nhom-card.cs .nhom-icon{background:var(--teal-soft);color:var(--teal)}
+.nhom-card.ht .nhom-icon{background:var(--amber-soft);color:var(--amber)}
+.nhom-icon svg{width:16px;height:16px}
+.nhom-tag{font-size:9px;padding:2px 7px;border-radius:10px;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.nhom-card.dhqg .nhom-tag{background:var(--purple-soft);color:var(--purple)}
+.nhom-card.bo .nhom-tag{background:var(--navy-soft);color:var(--navy)}
+.nhom-card.cs .nhom-tag{background:var(--teal-soft);color:var(--teal)}
+.nhom-card.ht .nhom-tag{background:var(--amber-soft);color:var(--amber)}
+.nhom-title{font-size:13px;font-weight:600;color:var(--tx);margin-bottom:4px}
+.nhom-sub{font-size:11px;color:var(--tx2);margin-bottom:14px;line-height:1.4}
+.nhom-stats{display:flex;align-items:baseline;gap:8px;margin-bottom:10px}
+.nhom-num{font-size:28px;font-weight:600;color:var(--tx);line-height:1;font-variant-numeric:tabular-nums}
+.nhom-of{font-size:11px;color:var(--tx2)}
+.nhom-progress{height:6px;background:var(--bg);border-radius:3px;overflow:hidden;margin-bottom:8px}
+.nhom-progress-fill{height:100%;border-radius:3px;transition:width .8s cubic-bezier(.4,0,.2,1)}
+.nhom-card.dhqg .nhom-progress-fill{background:linear-gradient(90deg,#7c3aed,#a78bfa)}
+.nhom-card.bo .nhom-progress-fill{background:linear-gradient(90deg,#1e40af,#3b82f6)}
+.nhom-card.cs .nhom-progress-fill{background:linear-gradient(90deg,#0d9488,#14b8a6)}
+.nhom-card.ht .nhom-progress-fill{background:linear-gradient(90deg,#d97706,#f59e0b)}
+.nhom-foot{display:flex;justify-content:space-between;font-size:10.5px;color:var(--tx2)}
+.nhom-foot strong{color:var(--tx);font-weight:600}
+
+.alert-card{background:linear-gradient(to right,#fef2f2 0%,#fff 50%);border:0.5px solid #fecaca;border-left:3px solid var(--red);border-radius:var(--r);padding:14px 16px;margin-bottom:14px}
+.alert-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.alert-h-left{display:flex;align-items:center;gap:8px}
+.alert-icon-box{width:28px;height:28px;background:var(--red-soft);border-radius:7px;display:flex;align-items:center;justify-content:center;color:var(--red)}
+.alert-icon-box svg{width:14px;height:14px}
+.alert-head-title{font-size:13px;font-weight:600;color:var(--red)}
+.alert-head-sub{font-size:11px;color:var(--tx2);margin-top:1px}
+.alert-action{font-size:11px;padding:5px 12px;background:var(--red);color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:500}
+.alert-list{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.alert-item{display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--surface);border-radius:7px;border:0.5px solid var(--bd)}
+.alert-bar{width:3px;height:24px;border-radius:2px;flex-shrink:0}
+.alert-bar.r{background:var(--red)} .alert-bar.o{background:var(--amber)}
+.alert-body{flex:1;min-width:0}
+.alert-name{font-size:11.5px;font-weight:500;color:var(--tx);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.alert-meta{font-size:10px;color:var(--tx2);margin-top:1px}
+.alert-days{font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;white-space:nowrap}
+.alert-days.r{background:var(--red-soft);color:var(--red)}
+.alert-days.o{background:var(--amber-soft);color:var(--amber)}
+
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.g32{display:grid;grid-template-columns:2fr 1fr;gap:12px;margin-bottom:14px}
+.g23{display:grid;grid-template-columns:1fr 2fr;gap:12px;margin-bottom:14px}
+.card{background:var(--surface);border-radius:var(--r);border:0.5px solid var(--bd);padding:14px 16px;box-shadow:var(--sh)}
+.card-title{font-size:13px;font-weight:600;color:var(--tx);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+.card-sub{font-size:10.5px;color:var(--tx2);font-weight:400}
+.chart-box{position:relative;width:100%}
+
+.hbar{margin-bottom:11px}
+.hbar:last-child{margin-bottom:0}
+.hbar-top{display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:5px}
+.hbar-name{color:var(--tx);font-weight:500}
+.hbar-val{color:var(--tx);font-variant-numeric:tabular-nums}
+.hbar-track{height:8px;background:var(--bg);border-radius:4px;overflow:hidden}
+.hbar-fill{height:100%;border-radius:4px;transition:width .8s cubic-bezier(.4,0,.2,1)}
+.hbar-fill.purple{background:linear-gradient(90deg,#7c3aed,#a78bfa)}
+.hbar-fill.navy{background:linear-gradient(90deg,#1e40af,#3b82f6)}
+.hbar-fill.teal{background:linear-gradient(90deg,#0d9488,#14b8a6)}
+.hbar-fill.amber{background:linear-gradient(90deg,#d97706,#f59e0b)}
+.hbar-fill.gray{background:linear-gradient(90deg,#6b7280,#9ca3af)}
+
+.timeline{position:relative;padding-left:22px}
+.timeline::before{content:'';position:absolute;left:7px;top:8px;bottom:8px;width:2px;background:linear-gradient(to bottom,var(--navy) 0%,var(--teal) 50%,var(--amber) 100%);border-radius:1px}
+.tl-event{position:relative;padding-bottom:12px}
+.tl-event:last-child{padding-bottom:0}
+.tl-event::before{content:'';position:absolute;left:-19px;top:5px;width:10px;height:10px;border-radius:50%;background:var(--surface);border:2px solid var(--navy)}
+.tl-event.done::before{background:var(--green);border-color:var(--green)}
+.tl-event.now::before{background:var(--amber);border-color:var(--amber);box-shadow:0 0 0 3px var(--amber-soft)}
+.tl-event.late::before{background:var(--red);border-color:var(--red)}
+.tl-date{font-size:10px;color:var(--tx2);font-weight:500}
+.tl-title{font-size:12px;color:var(--tx);font-weight:500;margin-top:1px}
+.tl-meta{font-size:10.5px;color:var(--tx2);margin-top:2px}
+
+.heat-grid{display:grid;grid-template-columns:120px repeat(12,1fr);gap:2px;font-size:10px}
+.heat-cell{aspect-ratio:1;border-radius:3px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:9.5px;font-weight:600;cursor:pointer;transition:transform .12s}
+.heat-cell:hover{transform:scale(1.15);box-shadow:0 2px 6px rgba(0,0,0,.2);z-index:5;position:relative}
+.heat-label{display:flex;align-items:center;font-size:11px;color:var(--tx);font-weight:500;padding-right:8px;justify-content:flex-end}
+.heat-month{font-size:9.5px;color:var(--tx2);text-align:center;font-weight:500;padding-bottom:4px}
+.heat-legend{display:flex;align-items:center;gap:8px;justify-content:flex-end;margin-top:10px;font-size:10px;color:var(--tx2)}
+.heat-legend-row{display:flex;gap:1px}
+.heat-legend-row span{width:14px;height:10px;border-radius:2px}
+
+.pie-row{display:flex;align-items:center;gap:8px;margin-bottom:7px;font-size:11px}
+.pie-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.pie-name{color:var(--tx2);flex:1}
+.pie-val{font-weight:600;color:var(--tx);font-variant-numeric:tabular-nums}
+.pie-pct{color:var(--tx2);font-size:10px;min-width:36px;text-align:right;font-variant-numeric:tabular-nums}
+
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;padding:2px 8px;border-radius:10px;font-weight:600}
+.pill.green{background:var(--green-soft);color:var(--green)}
+.pill.amber{background:var(--amber-soft);color:var(--amber)}
+.pill.red{background:var(--red-soft);color:var(--red)}
+.pill.navy{background:var(--navy-soft);color:var(--navy)}
+.pill.purple{background:var(--purple-soft);color:var(--purple)}
+
+.event-list{display:flex;flex-direction:column;gap:8px}
+.event-item{display:flex;gap:12px;padding:10px 12px;background:var(--soft);border-radius:8px;border:0.5px solid var(--bd);transition:all .15s;cursor:pointer}
+.event-item:hover{background:var(--surface);box-shadow:var(--sh);border-color:var(--bd2)}
+.event-date{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:46px;height:46px;background:var(--surface);border-radius:8px;border:0.5px solid var(--bd)}
+.event-month{font-size:9px;color:var(--amber);font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.event-day{font-size:18px;font-weight:600;color:var(--tx);line-height:1;margin-top:1px}
+.event-body{flex:1;min-width:0}
+.event-title{font-size:12px;font-weight:600;color:var(--tx);margin-bottom:3px}
+.event-meta{font-size:10.5px;color:var(--tx2);display:flex;gap:10px;flex-wrap:wrap}
+
+.deadline-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.dl-cell{background:var(--surface);border-radius:var(--r);padding:14px;border:0.5px solid var(--bd);text-align:center}
+.dl-cell.urgent{border-color:#fca5a5;background:linear-gradient(135deg,#fff 60%,var(--red-soft))}
+.dl-cell.warn{border-color:#fcd34d;background:linear-gradient(135deg,#fff 60%,var(--amber-soft))}
+.dl-cell.ok{border-color:#86efac;background:linear-gradient(135deg,#fff 60%,var(--green-soft))}
+.dl-num{font-size:30px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums}
+.dl-cell.urgent .dl-num{color:var(--red)}
+.dl-cell.warn .dl-num{color:var(--amber)}
+.dl-cell.ok .dl-num{color:var(--green)}
+.dl-lbl{font-size:11px;color:var(--tx2);margin-top:5px;font-weight:500}
+
+@media (max-width:900px){
+  .nhom-grid,.g2,.g32,.g23{grid-template-columns:1fr}
+  .hero-grid{grid-template-columns:1fr 1fr}
+  .alert-list{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-top">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" style="width:20px;height:20px"><path d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/></svg>
+      </div>
+      <div>
+        <div class="brand-name">SAMIS · Quản Lý Khoa Học</div>
+        <div class="brand-sub">Trường Đại học Kinh tế - Luật, ĐHQG TP.HCM</div>
+      </div>
+    </div>
+    <div class="hdr-actions">
+      <span style="font-size:10px;color:rgba(255,255,255,.6);margin-right:6px"><span class="live-dot"></span>Cập nhật 05/05/2026</span>
+      <button class="yr">2023–2024</button>
+      <button class="yr">2024–2025</button>
+      <button class="yr on">2025–2026</button>
+    </div>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab on" onclick="sw(0)">
+    <svg viewBox="0 0 24 24" fill="none"><path d="M9 17.25v1.007a3 3 0 0 1-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0 1 15 18.257V17.25m6-12V15a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 15V5.25m18 0A2.25 2.25 0 0 0 18.75 3H5.25A2.25 2.25 0 0 0 3 5.25m18 0V12a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 12V5.25" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Nhiệm vụ KHCN <span class="tab-badge">7</span>
+  </button>
+  <button class="tab" onclick="sw(1)">
+    <svg viewBox="0 0 24 24" fill="none"><path d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Công bố NCKH
+  </button>
+  <button class="tab" onclick="sw(2)">
+    <svg viewBox="0 0 24 24" fill="none"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Giáo trình
+  </button>
+  <button class="tab" onclick="sw(3)">
+    <svg viewBox="0 0 24 24" fill="none"><path d="M4.26 10.147a60.436 60.436 0 0 0-.491 6.347A48.627 48.627 0 0 1 12 20.904a48.627 48.627 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    NCKH Sinh viên
+  </button>
+  <button class="tab" onclick="sw(4)">
+    <svg viewBox="0 0 24 24" fill="none"><path d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Tiến độ vs KPI
+  </button>
+</div>
+
+<div class="panel on" id="p0">
+  <div class="hero-stats">
+    <div class="hero-grid">
+      <div class="hero-main">
+        <div class="hero-label">Tổng nhiệm vụ KHCN năm 2025–2026</div>
+        <div class="hero-num">312</div>
+        <div class="hero-meta"><span class="delta-pill up">↑ +18 (6.1%)</span><span>so với năm học trước</span></div>
+      </div>
+      <div class="hero-mini"><div class="mini-label">Đã hoàn thiện</div><div class="mini-num">178</div><div class="mini-bar"><div class="mini-bar-fill" style="width:57%;background:#059669"></div></div><div class="mini-foot">57.1% tổng số</div></div>
+      <div class="hero-mini"><div class="mini-label">Đang thực hiện</div><div class="mini-num">87</div><div class="mini-bar"><div class="mini-bar-fill" style="width:28%;background:#1e40af"></div></div><div class="mini-foot">27.9% đang chạy</div></div>
+      <div class="hero-mini"><div class="mini-label">Sắp hết hạn</div><div class="mini-num" style="color:#dc2626">7</div><div class="mini-bar"><div class="mini-bar-fill" style="width:90%;background:#dc2626"></div></div><div class="mini-foot">Trong 30 ngày tới</div></div>
+    </div>
+  </div>
+
+  <div class="nhom-grid">
+    <div class="nhom-card dhqg">
+      <div class="nhom-head">
+        <div class="nhom-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0 0 12 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="nhom-tag">ĐHQG</span>
+      </div>
+      <div class="nhom-title">Đề tài cấp ĐHQG</div>
+      <div class="nhom-sub">Loại C, Loại B, Trọng điểm</div>
+      <div class="nhom-stats"><span class="nhom-num">42</span><span class="nhom-of">/ 58 chỉ tiêu</span></div>
+      <div class="nhom-progress"><div class="nhom-progress-fill" style="width:72%"></div></div>
+      <div class="nhom-foot"><span>72% đạt KPI</span><strong>3.8 tỷ đ</strong></div>
+    </div>
+
+    <div class="nhom-card bo">
+      <div class="nhom-head">
+        <div class="nhom-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="nhom-tag">Cấp Bộ</span>
+      </div>
+      <div class="nhom-title">Đề tài cấp Bộ</div>
+      <div class="nhom-sub">Bộ GD-ĐT, Nafosted, ngành</div>
+      <div class="nhom-stats"><span class="nhom-num">28</span><span class="nhom-of">/ 35 chỉ tiêu</span></div>
+      <div class="nhom-progress"><div class="nhom-progress-fill" style="width:80%"></div></div>
+      <div class="nhom-foot"><span>80% đạt KPI</span><strong>5.2 tỷ đ</strong></div>
+    </div>
+
+    <div class="nhom-card cs">
+      <div class="nhom-head">
+        <div class="nhom-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M2.25 12 12 2.25 21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="nhom-tag">Cơ sở</span>
+      </div>
+      <div class="nhom-title">Đề tài cấp Cơ sở</div>
+      <div class="nhom-sub">Trường UEL, Khoa, Trung tâm</div>
+      <div class="nhom-stats"><span class="nhom-num">156</span><span class="nhom-of">/ 180 chỉ tiêu</span></div>
+      <div class="nhom-progress"><div class="nhom-progress-fill" style="width:87%"></div></div>
+      <div class="nhom-foot"><span>87% đạt KPI</span><strong>4.1 tỷ đ</strong></div>
+    </div>
+
+    <div class="nhom-card ht">
+      <div class="nhom-head">
+        <div class="nhom-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M15.182 15.182a4.5 4.5 0 0 1-6.364 0M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0zM9.75 9.75c0 .414-.168.75-.375.75S9 10.164 9 9.75 9.168 9 9.375 9s.375.336.375.75zm5.25 0c0 .414-.168.75-.375.75s-.375-.336-.375-.75.168-.75.375-.75.375.336.375.75z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="nhom-tag">Hội thảo</span>
+      </div>
+      <div class="nhom-title">Tổ chức Hội thảo</div>
+      <div class="nhom-sub">Quốc tế, Quốc gia, Khoa</div>
+      <div class="nhom-stats"><span class="nhom-num">86</span><span class="nhom-of">/ 100 chỉ tiêu</span></div>
+      <div class="nhom-progress"><div class="nhom-progress-fill" style="width:86%"></div></div>
+      <div class="nhom-foot"><span>86% đạt KPI</span><strong>2.3 tỷ đ</strong></div>
+    </div>
+  </div>
+
+  <div class="alert-card">
+    <div class="alert-head">
+      <div class="alert-h-left">
+        <div class="alert-icon-box"><svg viewBox="0 0 24 24" fill="none"><path d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div>
+          <div class="alert-head-title">Cảnh báo đề tài sắp hết hạn nghiệm thu</div>
+          <div class="alert-head-sub">7 đề tài cần xử lý trong 30 ngày tới · Cập nhật tự động hàng ngày</div>
+        </div>
+      </div>
+      <button class="alert-action">Xem tất cả →</button>
+    </div>
+    <div class="alert-list">
+      <div class="alert-item"><div class="alert-bar r"></div><div class="alert-body"><div class="alert-name">CS-2024-045 — Nghiên cứu chính sách tín dụng xanh</div><div class="alert-meta">Khoa TC-NH · Hạn: 12/05/2026</div></div><span class="alert-days r">Còn 7 ngày</span></div>
+      <div class="alert-item"><div class="alert-bar r"></div><div class="alert-body"><div class="alert-name">BO-2024-012 — Quản trị rủi ro doanh nghiệp SME</div><div class="alert-meta">Khoa QTKD · Hạn: 15/05/2026</div></div><span class="alert-days r">Còn 10 ngày</span></div>
+      <div class="alert-item"><div class="alert-bar o"></div><div class="alert-body"><div class="alert-name">CS-2024-078 — Chuyển đổi số trong kế toán</div><div class="alert-meta">Khoa KT-KT · Hạn: 20/05/2026</div></div><span class="alert-days o">Còn 15 ngày</span></div>
+      <div class="alert-item"><div class="alert-bar o"></div><div class="alert-body"><div class="alert-name">DHQG-2023-008 — Kinh tế số và TMĐT khu vực</div><div class="alert-meta">Khoa KTĐN · Hạn: 25/05/2026</div></div><span class="alert-days o">Còn 20 ngày</span></div>
+    </div>
+  </div>
+
+  <div class="g32">
+    <div class="card">
+      <div class="card-title"><span>Hoạt động đề tài theo tháng × cấp độ</span><span class="card-sub">Số đề tài mới đăng ký, năm 2025</span></div>
+      <div class="heat-grid">
+        <div></div>
+        <div class="heat-month">T1</div><div class="heat-month">T2</div><div class="heat-month">T3</div><div class="heat-month">T4</div><div class="heat-month">T5</div><div class="heat-month">T6</div><div class="heat-month">T7</div><div class="heat-month">T8</div><div class="heat-month">T9</div><div class="heat-month">T10</div><div class="heat-month">T11</div><div class="heat-month">T12</div>
+
+        <div class="heat-label">Cấp ĐHQG</div>
+        <div class="heat-cell" style="background:#ede9fe;color:#7c3aed">2</div><div class="heat-cell" style="background:#c4b5fd">4</div><div class="heat-cell" style="background:#a78bfa">5</div><div class="heat-cell" style="background:#8b5cf6">7</div><div class="heat-cell" style="background:#7c3aed">8</div><div class="heat-cell" style="background:#a78bfa">5</div><div class="heat-cell" style="background:#c4b5fd">3</div><div class="heat-cell" style="background:#ddd6fe;color:#7c3aed">2</div><div class="heat-cell" style="background:#c4b5fd">3</div><div class="heat-cell" style="background:#a78bfa">4</div><div class="heat-cell" style="background:#7c3aed">8</div><div class="heat-cell" style="background:#6d28d9">10</div>
+
+        <div class="heat-label">Cấp Bộ</div>
+        <div class="heat-cell" style="background:#dbeafe;color:#1e40af">1</div><div class="heat-cell" style="background:#bfdbfe;color:#1e40af">2</div><div class="heat-cell" style="background:#93c5fd">3</div><div class="heat-cell" style="background:#60a5fa">4</div><div class="heat-cell" style="background:#3b82f6">5</div><div class="heat-cell" style="background:#2563eb">6</div><div class="heat-cell" style="background:#60a5fa">4</div><div class="heat-cell" style="background:#93c5fd">3</div><div class="heat-cell" style="background:#bfdbfe;color:#1e40af">2</div><div class="heat-cell" style="background:#93c5fd">3</div><div class="heat-cell" style="background:#3b82f6">5</div><div class="heat-cell" style="background:#1d4ed8">7</div>
+
+        <div class="heat-label">Cấp Cơ sở</div>
+        <div class="heat-cell" style="background:#a7f3d0;color:#065f46">8</div><div class="heat-cell" style="background:#6ee7b7">12</div><div class="heat-cell" style="background:#34d399">15</div><div class="heat-cell" style="background:#10b981">18</div><div class="heat-cell" style="background:#0d9488">22</div><div class="heat-cell" style="background:#0f766e">25</div><div class="heat-cell" style="background:#14b8a6">14</div><div class="heat-cell" style="background:#5eead4;color:#0f766e">9</div><div class="heat-cell" style="background:#34d399">17</div><div class="heat-cell" style="background:#10b981">20</div><div class="heat-cell" style="background:#0d9488">23</div><div class="heat-cell" style="background:#0f766e">28</div>
+
+        <div class="heat-label">Hội thảo</div>
+        <div class="heat-cell" style="background:#fef3c7;color:#92400e">3</div><div class="heat-cell" style="background:#fcd34d;color:#92400e">5</div><div class="heat-cell" style="background:#fbbf24">7</div><div class="heat-cell" style="background:#f59e0b">9</div><div class="heat-cell" style="background:#d97706">11</div><div class="heat-cell" style="background:#fbbf24">8</div><div class="heat-cell" style="background:#fcd34d;color:#92400e">5</div><div class="heat-cell" style="background:#fde68a;color:#92400e">4</div><div class="heat-cell" style="background:#fcd34d;color:#92400e">6</div><div class="heat-cell" style="background:#fbbf24">8</div><div class="heat-cell" style="background:#d97706">12</div><div class="heat-cell" style="background:#b45309">14</div>
+      </div>
+      <div class="heat-legend"><span>Ít</span><div class="heat-legend-row"><span style="background:#f3f4f6"></span><span style="background:#e5e7eb"></span><span style="background:#9ca3af"></span><span style="background:#4b5563"></span><span style="background:#1f2937"></span></div><span>Nhiều</span></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span>Phân bổ ngân sách</span><span class="card-sub">Tổng 15.4 tỷ đ</span></div>
+      <div style="position:relative;height:160px;margin-bottom:12px"><canvas id="cBudget" role="img" aria-label="Phân bổ ngân sách"></canvas></div>
+      <div class="pie-row"><span class="pie-dot" style="background:#7c3aed"></span><span class="pie-name">Cấp ĐHQG</span><span class="pie-val">3.8 tỷ</span><span class="pie-pct">24.7%</span></div>
+      <div class="pie-row"><span class="pie-dot" style="background:#1e40af"></span><span class="pie-name">Cấp Bộ</span><span class="pie-val">5.2 tỷ</span><span class="pie-pct">33.8%</span></div>
+      <div class="pie-row"><span class="pie-dot" style="background:#0d9488"></span><span class="pie-name">Cấp Cơ sở</span><span class="pie-val">4.1 tỷ</span><span class="pie-pct">26.6%</span></div>
+      <div class="pie-row"><span class="pie-dot" style="background:#d97706"></span><span class="pie-name">Hội thảo</span><span class="pie-val">2.3 tỷ</span><span class="pie-pct">14.9%</span></div>
+    </div>
+  </div>
+
+  <div class="g23">
+    <div class="card">
+      <div class="card-title"><span>Roadmap nghiệm thu Q2/2026</span><span class="card-sub">Lịch theo tuần</span></div>
+      <div class="timeline">
+        <div class="tl-event done"><div class="tl-date">Tuần 1, tháng 4 · Đã xong</div><div class="tl-title">Nghiệm thu 8 đề tài Cơ sở</div><div class="tl-meta">Khoa Kinh tế, Luật, QTKD</div></div>
+        <div class="tl-event now"><div class="tl-date">Tuần này · Đang triển khai</div><div class="tl-title">Hội đồng nghiệm thu cấp Bộ</div><div class="tl-meta">5 đề tài Bộ GD-ĐT, Khoa TC-NH</div></div>
+        <div class="tl-event late"><div class="tl-date">12/05/2026 · Sắp đến hạn</div><div class="tl-title">CS-2024-045 (Tín dụng xanh)</div><div class="tl-meta">Còn 7 ngày — chuẩn bị hồ sơ gấp</div></div>
+        <div class="tl-event"><div class="tl-date">25/05/2026 · Sắp tới</div><div class="tl-title">DHQG-2023-008 (Kinh tế số)</div><div class="tl-meta">Đề tài ĐHQG loại C</div></div>
+        <div class="tl-event"><div class="tl-date">Tháng 6/2026</div><div class="tl-title">Hội đồng cấp ĐHQG đợt 2</div><div class="tl-meta">12 đề tài dự kiến</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span>Top 6 đơn vị có nhiệm vụ KHCN nhiều nhất</span><span class="card-sub">Theo tổng số đề tài đang chạy</span></div>
+      <div class="hbar"><div class="hbar-top"><span class="hbar-name">Khoa Kinh tế</span><span class="hbar-val">68 đề tài</span></div><div class="hbar-track"><div class="hbar-fill navy" style="width:100%"></div></div></div>
+      <div class="hbar"><div class="hbar-top"><span class="hbar-name">Khoa Luật</span><span class="hbar-val">54</span></div><div class="hbar-track"><div class="hbar-fill purple" style="width:79%"></div></div></div>
+      <div class="hbar"><div class="hbar-top"><span class="hbar-name">Khoa Quản trị Kinh doanh</span><span class="hbar-val">49</span></div><div class="hbar-track"><div class="hbar-fill teal" style="width:72%"></div></div></div>
+      <div class="hbar"><div class="hbar-top"><span class="hbar-name">Khoa Tài chính - Ngân hàng</span><span class="hbar-val">41</span></div><div class="hbar-track"><div class="hbar-fill amber" style="width:60%"></div></div></div>
+      <div class="hbar"><div class="hbar-top"><span class="hbar-name">Khoa Kinh tế Đối ngoại</span><span class="hbar-val">38</span></div><div class="hbar-track"><div class="hbar-fill navy" style="width:56%"></div></div></div>
+      <div class="hbar"><div class="hbar-top"><span class="hbar-name">Khoa Kế toán - Kiểm toán</span><span class="hbar-val">34</span></div><div class="hbar-track"><div class="hbar-fill purple" style="width:50%"></div></div></div>
+
+      <div style="height:1px;background:var(--bd);margin:12px 0"></div>
+      <div class="card-title" style="margin-bottom:8px"><span>Hội thảo sắp tới</span><span class="card-sub">3 sự kiện</span></div>
+      <div class="event-list">
+        <div class="event-item"><div class="event-date"><div class="event-month">Th 5</div><div class="event-day">18</div></div><div class="event-body"><div class="event-title">Hội thảo QT về AI trong Kinh tế</div><div class="event-meta"><span>Hội trường A1</span><span>~250 người</span><span class="pill purple">Quốc tế</span></div></div></div>
+        <div class="event-item"><div class="event-date"><div class="event-month">Th 5</div><div class="event-day">25</div></div><div class="event-body"><div class="event-title">Workshop Chuyển đổi số tại UEL</div><div class="event-meta"><span>Phòng họp B2</span><span>~80 người</span><span class="pill navy">Quốc gia</span></div></div></div>
+        <div class="event-item"><div class="event-date"><div class="event-month">Th 6</div><div class="event-day">10</div></div><div class="event-body"><div class="event-title">Seminar Kinh tế số khu vực ASEAN</div><div class="event-meta"><span>Online + A2</span><span>~120 người</span><span class="pill amber">Khoa</span></div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="g2">
+    <div class="card">
+      <div class="card-title"><span>Xu hướng nhiệm vụ KHCN theo năm</span><span class="card-sub">2020 – 2026</span></div>
+      <div class="chart-box" style="height:230px"><canvas id="cTrend" role="img" aria-label="Xu hướng đề tài KHCN"></canvas></div>
+      <div style="display:flex;gap:14px;margin-top:10px;font-size:11px;color:var(--tx2);flex-wrap:wrap">
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:3px;background:#7c3aed"></span>ĐHQG</span>
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:3px;background:#1e40af"></span>Cấp Bộ</span>
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:3px;background:#0d9488"></span>Cấp Cơ sở</span>
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:3px;background:#d97706"></span>Hội thảo</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span>Trạng thái nhiệm vụ KHCN</span><span class="card-sub">Tổng 312 đề tài</span></div>
+      <div class="chart-box" style="height:200px"><canvas id="cStatus" role="img" aria-label="Trạng thái đề tài"></canvas></div>
+      <div style="margin-top:10px">
+        <div class="pie-row"><span class="pie-dot" style="background:#10b981"></span><span class="pie-name">Hoàn thiện đúng hạn</span><span class="pie-val">178</span><span class="pie-pct">57.1%</span></div>
+        <div class="pie-row"><span class="pie-dot" style="background:#3b82f6"></span><span class="pie-name">Đang thực hiện đúng tiến độ</span><span class="pie-val">87</span><span class="pie-pct">27.9%</span></div>
+        <div class="pie-row"><span class="pie-dot" style="background:#f59e0b"></span><span class="pie-name">Trễ tiến độ &lt; 30 ngày</span><span class="pie-val">23</span><span class="pie-pct">7.4%</span></div>
+        <div class="pie-row"><span class="pie-dot" style="background:#ef4444"></span><span class="pie-name">Hủy / Dừng</span><span class="pie-val">24</span><span class="pie-pct">7.7%</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin:16px 4px 8px;font-size:11px;color:var(--tx2);font-weight:600;text-transform:uppercase;letter-spacing:.6px">Tóm tắt deadline 30 ngày tới</div>
+  <div class="deadline-grid">
+    <div class="dl-cell urgent"><div class="dl-num">2</div><div class="dl-lbl">Khẩn cấp (&lt; 7 ngày)</div></div>
+    <div class="dl-cell warn"><div class="dl-num">5</div><div class="dl-lbl">Cảnh báo (7–15 ngày)</div></div>
+    <div class="dl-cell ok"><div class="dl-num">12</div><div class="dl-lbl">Còn thời gian (15–30 ngày)</div></div>
+  </div>
+</div>
+
+<div class="panel" id="p1">
+  <div class="hero-stats">
+    <div class="hero-grid">
+      <div class="hero-main"><div class="hero-label">Tổng công bố khoa học 2025–2026</div><div class="hero-num">423</div><div class="hero-meta"><span class="delta-pill up">↑ +56 (15.3%)</span><span>so với năm trước</span></div></div>
+      <div class="hero-mini"><div class="mini-label">WoS / Scopus</div><div class="mini-num">178</div><div class="mini-bar"><div class="mini-bar-fill" style="width:42%;background:#7c3aed"></div></div><div class="mini-foot">42% tổng công bố</div></div>
+      <div class="hero-mini"><div class="mini-label">Trong nước</div><div class="mini-num">192</div><div class="mini-bar"><div class="mini-bar-fill" style="width:45%;background:#0d9488"></div></div><div class="mini-foot">45% tổng công bố</div></div>
+      <div class="hero-mini"><div class="mini-label">TC/GV (tiêu chí 6.2)</div><div class="mini-num" style="color:#d97706">2.6</div><div class="mini-bar"><div class="mini-bar-fill" style="width:87%;background:#d97706"></div></div><div class="mini-foot">Mục tiêu: 3.0</div></div>
+    </div>
+  </div>
+  <div class="g32">
+    <div class="card"><div class="card-title"><span>Xu hướng công bố theo năm</span><span class="card-sub">2020–2026</span></div><div class="chart-box" style="height:240px"><canvas id="cP1Line" role="img" aria-label="Xu hướng công bố"></canvas></div>
+      <div style="display:flex;gap:14px;margin-top:8px;font-size:11px;color:var(--tx2)">
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:3px;background:#7c3aed"></span>WoS/Scopus</span>
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:3px;background:#0d9488"></span>Trong nước</span>
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:3px;background:#d97706"></span>Hội thảo QT</span>
+      </div>
+    </div>
+    <div class="card"><div class="card-title"><span>Phân loại tạp chí</span><span class="card-sub">Theo Quartile</span></div><div class="chart-box" style="height:170px"><canvas id="cP1Donut" role="img" aria-label="Phân loại"></canvas></div>
+      <div style="margin-top:10px">
+        <div class="pie-row"><span class="pie-dot" style="background:#7c3aed"></span><span class="pie-name">Q1 / Top journals</span><span class="pie-val">45</span><span class="pie-pct">25.3%</span></div>
+        <div class="pie-row"><span class="pie-dot" style="background:#3b82f6"></span><span class="pie-name">Q2 / SSCI</span><span class="pie-val">62</span><span class="pie-pct">34.8%</span></div>
+        <div class="pie-row"><span class="pie-dot" style="background:#0d9488"></span><span class="pie-name">Q3 / Q4</span><span class="pie-val">71</span><span class="pie-pct">39.9%</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="p2">
+  <div class="hero-stats"><div class="hero-grid">
+    <div class="hero-main"><div class="hero-label">Giáo trình & Sách 2025–2026</div><div class="hero-num">94</div><div class="hero-meta"><span class="delta-pill up">↑ +12</span><span>so với năm trước</span></div></div>
+    <div class="hero-mini"><div class="mini-label">Đã xuất bản</div><div class="mini-num">51</div><div class="mini-bar"><div class="mini-bar-fill" style="width:54%;background:#059669"></div></div><div class="mini-foot">54.3% hoàn thành</div></div>
+    <div class="hero-mini"><div class="mini-label">Đang biên soạn</div><div class="mini-num">30</div><div class="mini-bar"><div class="mini-bar-fill" style="width:32%;background:#1e40af"></div></div><div class="mini-foot">31.9% đang chạy</div></div>
+    <div class="hero-mini"><div class="mini-label">Hủy / Dừng</div><div class="mini-num" style="color:#dc2626">13</div><div class="mini-bar"><div class="mini-bar-fill" style="width:14%;background:#dc2626"></div></div><div class="mini-foot">13.8% dừng lại</div></div>
+  </div></div>
+  <div class="g2">
+    <div class="card"><div class="card-title"><span>Tiến độ theo đơn vị</span></div>
+      <div class="hbar"><div class="hbar-top"><span class="hbar-name">Khoa QTKD</span><span class="hbar-val">22</span></div><div class="hbar-track"><div class="hbar-fill teal" style="width:91%"></div></div></div>
+      <div class="hbar"><div class="hbar-top"><span class="hbar-name">Khoa Kinh tế</span><span class="hbar-val">18</span></div><div class="hbar-track"><div class="hbar-fill navy" style="width:75%"></div></div></div>
+      <div class="hbar"><div class="hbar-top"><span class="hbar-name">Khoa Luật</span><span class="hbar-val">15</span></div><div class="hbar-track"><div class="hbar-fill purple" style="width:63%"></div></div></div>
+      <div class="hbar"><div class="hbar-top"><span class="hbar-name">Khoa TC-NH</span><span class="hbar-val">12</span></div><div class="hbar-track"><div class="hbar-fill amber" style="width:50%"></div></div></div>
+      <div class="hbar"><div class="hbar-top"><span class="hbar-name">Đơn vị khác</span><span class="hbar-val">27</span></div><div class="hbar-track"><div class="hbar-fill gray" style="width:40%"></div></div></div>
+    </div>
+    <div class="card"><div class="card-title"><span>Phân loại</span></div><div class="chart-box" style="height:200px"><canvas id="cP2" role="img" aria-label="Phân loại giáo trình"></canvas></div></div>
+  </div>
+</div>
+
+<div class="panel" id="p3">
+  <div class="hero-stats"><div class="hero-grid">
+    <div class="hero-main"><div class="hero-label">NCKH Sinh viên 2025–2026</div><div class="hero-num">156</div><div class="hero-meta"><span class="delta-pill up">↑ +24</span><span>tăng mạnh</span></div></div>
+    <div class="hero-mini"><div class="mini-label">Giải Bộ</div><div class="mini-num">22</div><div class="mini-bar"><div class="mini-bar-fill" style="width:14%;background:#7c3aed"></div></div><div class="mini-foot">14.1% giải cao</div></div>
+    <div class="hero-mini"><div class="mini-label">Giải ĐHQG</div><div class="mini-num">45</div><div class="mini-bar"><div class="mini-bar-fill" style="width:29%;background:#1e40af"></div></div><div class="mini-foot">28.8% tổng số</div></div>
+    <div class="hero-mini"><div class="mini-label">Đang thực hiện</div><div class="mini-num" style="color:#d97706">89</div><div class="mini-bar"><div class="mini-bar-fill" style="width:57%;background:#d97706"></div></div><div class="mini-foot">57.1% tiếp tục</div></div>
+  </div></div>
+  <div class="g23">
+    <div class="card"><div class="card-title"><span>Top khoa dẫn đầu</span></div>
+      <div class="hbar"><div class="hbar-top"><span class="hbar-name">Khoa QTKD</span><span class="hbar-val">38</span></div><div class="hbar-track"><div class="hbar-fill teal" style="width:85%"></div></div></div>
+      <div class="hbar"><div class="hbar-top"><span class="hbar-name">Khoa Kinh tế</span><span class="hbar-val">32</span></div><div class="hbar-track"><div class="hbar-fill navy" style="width:71%"></div></div></div>
+      <div class="hbar"><div class="hbar-top"><span class="hbar-name">Khoa Luật</span><span class="hbar-val">28</span></div><div class="hbar-track"><div class="hbar-fill purple" style="width:62%"></div></div></div>
+      <div class="hbar"><div class="hbar-top"><span class="hbar-name">Khoa TC-NH</span><span class="hbar-val">24</span></div><div class="hbar-track"><div class="hbar-fill amber" style="width:53%"></div></div></div>
+    </div>
+    <div class="card"><div class="card-title"><span>Xu hướng NCKH SV</span><span class="card-sub">2020–2026</span></div><div class="chart-box" style="height:230px"><canvas id="cP3" role="img" aria-label="Xu hướng SV"></canvas></div></div>
+  </div>
+</div>
+
+<div class="panel" id="p4">
+  <div class="hero-stats"><div class="hero-grid">
+    <div class="hero-main"><div class="hero-label">Đối sánh KPI Phòng QLKH</div><div class="hero-num" style="font-size:32px">9 / 12</div><div class="hero-meta"><span class="delta-pill up">75% đạt KPI</span><span>3 đơn vị cần theo dõi</span></div></div>
+    <div class="hero-mini"><div class="mini-label">Tổng Scopus 2026</div><div class="mini-num">178 / 202</div><div class="mini-bar"><div class="mini-bar-fill" style="width:88%;background:#d97706"></div></div><div class="mini-foot">88% mục tiêu</div></div>
+    <div class="hero-mini"><div class="mini-label">Trong đó Q1</div><div class="mini-num">45 / 62</div><div class="mini-bar"><div class="mini-bar-fill" style="width:73%;background:#7c3aed"></div></div><div class="mini-foot">73% mục tiêu</div></div>
+    <div class="hero-mini"><div class="mini-label">Doanh thu KHCN</div><div class="mini-num">12.8 / 15.4</div><div class="mini-bar"><div class="mini-bar-fill" style="width:83%;background:#059669"></div></div><div class="mini-foot">83% · tỷ đồng</div></div>
+  </div></div>
+  <div class="card" style="overflow-x:auto">
+    <div class="card-title"><span>Đối sánh KPI từng khoa — Công bố Scopus 2026</span><span class="card-sub">Theo bảng dự kiến chỉ tiêu</span></div>
+    <table style="width:100%;border-collapse:collapse;font-size:11px">
+      <thead><tr style="background:var(--bg);text-align:left">
+        <th style="padding:8px 10px;font-weight:600;color:var(--tx2)">Đơn vị</th>
+        <th style="padding:8px 10px;font-weight:600;color:var(--tx2);text-align:right">Nhân sự</th>
+        <th style="padding:8px 10px;font-weight:600;color:var(--tx2);text-align:right">KPI Scopus</th>
+        <th style="padding:8px 10px;font-weight:600;color:var(--tx2);text-align:right">Q1</th>
+        <th style="padding:8px 10px;font-weight:600;color:var(--tx2);text-align:right">Tỉ lệ GV CBQT</th>
+        <th style="padding:8px 10px;font-weight:600;color:var(--tx2);text-align:right">DT KHCN</th>
+        <th style="padding:8px 10px;font-weight:600;color:var(--tx2);text-align:center">Trạng thái</th>
+      </tr></thead>
+      <tbody id="kpiTbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const tabs = document.querySelectorAll('.tab');
+const panels = document.querySelectorAll('.panel');
+function sw(i){ tabs.forEach((t,j)=>t.classList.toggle('on',i===j)); panels.forEach((p,j)=>p.classList.toggle('on',i===j)); renderChart(i); }
+
+const baseOpt = {
+  responsive: true, maintainAspectRatio: false,
+  plugins: { legend: { display: false }, tooltip: { titleFont:{size:11}, bodyFont:{size:11}, padding:8 } },
+  scales: {
+    x: { grid: { display:false }, ticks:{ font:{size:10}, color:'#57534e' }, border:{display:false} },
+    y: { grid: { color:'rgba(0,0,0,0.05)' }, ticks:{ font:{size:10}, color:'#57534e' }, border:{display:false} }
+  }
+};
+const rendered = {};
+
+function renderChart(i){
+  if(rendered[i]) return; rendered[i] = true;
+
+  if(i===0){
+    new Chart(document.getElementById('cBudget'), {
+      type:'doughnut',
+      data:{ labels:['Cấp ĐHQG','Cấp Bộ','Cấp Cơ sở','Hội thảo'], datasets:[{ data:[3.8,5.2,4.1,2.3], backgroundColor:['#7c3aed','#1e40af','#0d9488','#d97706'], borderWidth:3, borderColor:'#fff' }] },
+      options:{ responsive:true, maintainAspectRatio:false, cutout:'68%', plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:c=>c.label+': '+c.parsed+' tỷ' } } } }
+    });
+    new Chart(document.getElementById('cTrend'), {
+      type:'line',
+      data:{ labels:['2020','2021','2022','2023','2024','2025','2026'], datasets:[
+        { data:[18,22,28,35,38,40,42], borderColor:'#7c3aed', backgroundColor:'rgba(124,58,237,0.08)', tension:0.4, fill:true, pointRadius:3, borderWidth:2.5 },
+        { data:[12,15,18,22,25,27,28], borderColor:'#1e40af', backgroundColor:'rgba(30,64,175,0.06)', tension:0.4, fill:true, pointRadius:3, borderWidth:2.5, borderDash:[5,3] },
+        { data:[80,95,110,128,140,148,156], borderColor:'#0d9488', backgroundColor:'rgba(13,148,136,0.06)', tension:0.4, fill:true, pointRadius:3, borderWidth:2.5 },
+        { data:[45,52,60,68,75,82,86], borderColor:'#d97706', backgroundColor:'rgba(217,119,6,0.06)', tension:0.4, fill:true, pointRadius:3, borderWidth:2.5, borderDash:[3,3] }
+      ]},
+      options: baseOpt
+    });
+    new Chart(document.getElementById('cStatus'), {
+      type:'doughnut',
+      data:{ datasets:[{ data:[178,87,23,24], backgroundColor:['#10b981','#3b82f6','#f59e0b','#ef4444'], borderWidth:3, borderColor:'#fff' }] },
+      options:{ responsive:true, maintainAspectRatio:false, cutout:'62%', plugins:{legend:{display:false}} }
+    });
+  }
+  if(i===1){
+    new Chart(document.getElementById('cP1Line'), {
+      type:'line',
+      data:{ labels:['2020','2021','2022','2023','2024','2025','2026'], datasets:[
+        { data:[45,62,78,95,112,145,178], borderColor:'#7c3aed', backgroundColor:'rgba(124,58,237,0.08)', tension:0.4, fill:true, pointRadius:3, borderWidth:2.5 },
+        { data:[80,95,110,130,155,175,192], borderColor:'#0d9488', backgroundColor:'rgba(13,148,136,0.06)', tension:0.4, fill:true, pointRadius:3, borderWidth:2.5, borderDash:[5,3] },
+        { data:[20,28,35,42,48,55,53], borderColor:'#d97706', backgroundColor:'rgba(217,119,6,0.05)', tension:0.4, fill:true, pointRadius:3, borderWidth:2.5, borderDash:[3,3] }
+      ]},
+      options: baseOpt
+    });
+    new Chart(document.getElementById('cP1Donut'), {
+      type:'doughnut',
+      data:{ datasets:[{ data:[45,62,71], backgroundColor:['#7c3aed','#3b82f6','#0d9488'], borderWidth:3, borderColor:'#fff' }] },
+      options:{ responsive:true, maintainAspectRatio:false, cutout:'62%', plugins:{legend:{display:false}} }
+    });
+  }
+  if(i===2){
+    new Chart(document.getElementById('cP2'), {
+      type:'bar',
+      data:{ labels:['Giáo trình','Sách CK','Tài liệu TK'], datasets:[
+        { label:'Hoàn thiện', data:[31,12,8], backgroundColor:'#10b981', borderRadius:4 },
+        { label:'Đang TH', data:[18,8,4], backgroundColor:'#3b82f6', borderRadius:4 },
+        { label:'Hủy', data:[5,5,3], backgroundColor:'#ef4444', borderRadius:4 }
+      ]},
+      options: baseOpt
+    });
+  }
+  if(i===3){
+    new Chart(document.getElementById('cP3'), {
+      type:'line',
+      data:{ labels:['2020','2021','2022','2023','2024','2025','2026'], datasets:[
+        { data:[8,10,12,15,17,20,22], borderColor:'#7c3aed', backgroundColor:'rgba(124,58,237,0.08)', tension:0.4, fill:true, pointRadius:3, borderWidth:2.5 },
+        { data:[20,25,28,32,38,42,45], borderColor:'#1e40af', backgroundColor:'rgba(30,64,175,0.06)', tension:0.4, fill:true, pointRadius:3, borderWidth:2.5, borderDash:[5,3] },
+        { data:[80,90,100,115,130,142,156], borderColor:'#0d9488', backgroundColor:'rgba(13,148,136,0.06)', tension:0.4, fill:true, pointRadius:3, borderWidth:2.5 }
+      ]},
+      options: baseOpt
+    });
+  }
+  if(i===4){
+    const KPI_DATA = [
+      ['Khoa HT Thông tin',20,24,7,'40%','1,0','warn'],
+      ['Khoa KT - Kiểm toán',15,23,7,'40%','1,0','warn'],
+      ['Khoa Kinh tế',23,26,8,'43%','1,2','ok'],
+      ['Khoa KT Đối ngoại',23,25,8,'48%','1,0','ok'],
+      ['Khoa Luật',32,14,4,'28%','0,8','bad'],
+      ['Khoa Luật Kinh tế',25,12,4,'32%','0,8','bad'],
+      ['Khoa QTKD',32,26,8,'47%','1,5','ok'],
+      ['Khoa TC - Ngân hàng',18,24,7,'44%','1,2','ok'],
+      ['Khoa Toán Kinh tế',13,14,4,'38%','0,9','warn'],
+      ['Viện IBT',8,2,1,'38%','1,5','warn'],
+      ['Viện IICL',3,2,1,'33%','1,5','warn'],
+      ['Viện IDP',2,10,3,'50%','3,0','ok']
+    ];
+    const PILLS = { ok:['green','Đạt KPI'], warn:['amber','Theo dõi'], bad:['red','Chưa đạt'] };
+    const tbody = document.getElementById('kpiTbody');
+    KPI_DATA.forEach(r=>{
+      const [k,p] = [PILLS[r[6]][0], PILLS[r[6]][1]];
+      tbody.innerHTML += `<tr style="border-bottom:0.5px solid var(--bd)">
+        <td style="padding:7px 10px">${r[0]}</td>
+        <td style="padding:7px 10px;text-align:right">${r[1]}</td>
+        <td style="padding:7px 10px;text-align:right;font-weight:600">${r[2]}</td>
+        <td style="padding:7px 10px;text-align:right">${r[3]}</td>
+        <td style="padding:7px 10px;text-align:right">${r[4]}</td>
+        <td style="padding:7px 10px;text-align:right">${r[5]}</td>
+        <td style="padding:7px 10px;text-align:center"><span class="pill ${k}">${p}</span></td>
+      </tr>`;
+    });
+    tbody.innerHTML += `<tr style="background:var(--bg);font-weight:600">
+      <td style="padding:9px 10px">Tổng cộng</td>
+      <td style="padding:9px 10px;text-align:right">214</td>
+      <td style="padding:9px 10px;text-align:right">202</td>
+      <td style="padding:9px 10px;text-align:right">62</td>
+      <td style="padding:9px 10px;text-align:right">40%</td>
+      <td style="padding:9px 10px;text-align:right">15,4</td>
+      <td style="padding:9px 10px;text-align:center"><span class="pill amber">9/12 đạt</span></td>
+    </tr>`;
+  }
+}
+
+renderChart(0);
+
+document.querySelectorAll('.yr').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    document.querySelectorAll('.yr').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+  });
+});
+</script>
+
+</body>
+</html>
